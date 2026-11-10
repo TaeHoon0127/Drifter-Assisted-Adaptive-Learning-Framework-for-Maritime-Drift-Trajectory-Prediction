@@ -1,21 +1,25 @@
-1. 공개 코드의 구성 원칙
+1. Principles for Organizing the Released Code
 
-이 디렉터리는 저자가 실제 사용한 원본 실험 스크립트를 기반으로 작성했다.
-원본의 파일명, prediction/correction 구분, 모델 구조, 학습 순서, np.append를
-이용한 데이터 구성, 학습/평가 구간 및 결과 로그 형식을 가능한 한 유지했다.
-원본 프로젝트의 코드, 데이터, 기존 학습 모델 및 저장 결과는 변경하지 않았다.
+This directory was prepared from the original experimental scripts actually used by the authors.
+Wherever possible, the original file names, separation between prediction and correction,
+model architectures, training order, data construction using np.append, training/evaluation
+intervals, and result-log formats have been preserved.
+The code, data, previously trained models, and saved results in the original project were not modified.
 
-데이터 종류/관측 연도에 따라 복사해 두었던 경로 및 동일한 실행 블록을
-입력/출력 경로 인수로 대체했다. 이전에 작성했던 통합 학습 프레임워크는 제거했다.
-GA용 24시간 학습 코드는 원래 증분학습 코드와 test_hours만 달랐으므로,
-같은 원본 로직을 test_hours=24로 호출하는 짧은 실행 파일로 제공한다.
+Paths and identical execution blocks that had been duplicated for different drifter types
+and observation years were replaced with input/output path arguments.
+A previously prepared integrated training framework was removed.
+Because the 24-hour training code for GA differs from the original incremental-learning
+code only in test_hours, it is provided as a short launcher that calls the same original
+logic with test_hours=24.
 
-2. 실행 환경: 현재 conda tensor 환경
+2. Execution Environment: Current Conda 'tensor' Environment
 
-아래는 논문의 실험이 수행된 실제 tensor 환경에서 확인한 값이다.
+The following values were verified in the actual 'tensor' environment used for the
+experiments reported in the manuscript.
 
-  운영체제: Linux x86_64 / WSL2
-  커널: 5.15.167.4-microsoft-standard-WSL2
+  Operating system: Linux x86_64 / WSL2
+  Kernel: 5.15.167.4-microsoft-standard-WSL2
   glibc: 2.35
   Python: 3.12.9 (Anaconda, GCC 11.2.0)
   NumPy: 2.0.1
@@ -30,298 +34,377 @@ GA용 24시간 학습 코드는 원래 증분학습 코드와 test_hours만 달�
   joblib: 1.4.2
   pandas: 2.3.1
   Java: OpenJDK 11.0.1-internal
-  RBFN 확인에 사용한 WEKA: 3.8.7 + RBFNetwork 패키지
+  WEKA used to verify RBFN: 3.8.7 + RBFNetwork package
 
-TensorFlow는 CUDA 12.4를 대상으로 빌드된 배포판이다. conda 환경에는
-cuDNN 9.1.1.17이 있으며 pip로 설치된 NVIDIA 패키지도 함께 존재한다.
-정확한 conda/pip 구성은 environment_tensor.yml을 기준으로 확인한다.
+The TensorFlow distribution was built for CUDA 12.4. The conda environment includes
+cuDNN 9.1.1.17, along with NVIDIA packages installed through pip.
+Refer to environment_tensor.yml for the exact conda/pip configuration.
 
   environment_tensor.yml
-    conda env export -n tensor --no-builds 결과. 설치 경로 prefix는 제거했다.
+    Output of 'conda env export -n tensor --no-builds'; the installation-path
+    prefix has been removed.
   environment_tensor_packages.json
-    현재 전체 199개 패키지의 버전/build/channel 기록.
+    Version/build/channel records for all 199 packages in the current environment.
   runtime_environment.json
-    Python/OS/TensorFlow 빌드/Java 버전 기록.
+    Python/OS/TensorFlow build/Java version information.
 
-다른 컴퓨터에 환경을 생성하는 경우:
+To create the environment on another computer:
 
   conda env create -f environment_tensor.yml
   conda activate tensor
   cd journal_code
 
-3. 경로, 데이터 형식 및 공개 원본 예시
+3. Paths, Data Formats, and Released Raw-Data Example
 
-data_path와 save_path는 실제 데이터 위치와 결과 저장 위치로 바꾸는 일반 경로이다.
+data_path and save_path are generic paths to be replaced with the actual data location
+and output directory, respectively.
 
-source_a/source_b는 사전학습에 사용한 다른 두 데이터셋이고 target은 추가 학습
-및 평가 대상 데이터셋이다. 관측 연도/종류가 바뀌면 동일 스크립트에 해당 경로를 준다.
-hourly와 expanded의 같은 궤적은 파일명이 일치해야 한다.
-연도별 원자료를 최종 merged 코호트로 구성하는 규칙/파일은 별도로 준비해야 한다.
+source_a and source_b refer to the two other datasets used for pretraining, whereas
+target refers to the dataset used for additional training and evaluation.
+For a different observation year or drifter type, supply the corresponding paths to
+the same scripts. Files representing the same trajectory must have matching names
+in the hourly and expanded directories.
+The rules and files used to construct the final merged cohorts from the raw data
+for each year must be prepared separately.
 
+The first 10 physical lines of the specified original SVP file were copied verbatim.
+These consist of one header line and nine data lines; the values, column order, and
+line breaks were not changed.
+The file contains time, observed longitude/latitude, modeled longitude/latitude,
+and wind/current components at the observed and modeled positions.
+It is a partial example intended to illustrate the original data format, not the
+complete training dataset.
+Because the original dataset-generation code uses only the first two data rows
+of each simulation file, a short excerpt from one original file is insufficient
+to construct a four-hour history or to perform the full 24-/48-hour evaluation.
 
-사용자가 지정한 SVP 원본 파일의 첫 10개 물리적 줄을 그대로 복사했다.
-헤더 1줄과 데이터 9줄이며 값, 열 순서 및 개행을 수정하지 않았다.
-time, 관측 경위도, 모델 경위도, 관측/모델 위치의 바람 및 해류 성분이 포함된다.
-이 파일은 원본 형식 설명을 위한 일부 예시이며 전체 학습 데이터가 아니다.
-원본 데이터셋 생성 코드는 시뮬레이션 파일마다 앞 두 데이터 행만 사용하므로,
-원본 파일 하나의 일부만으로 4시간 이력이나 24/48시간 평가 전체를 만들 수 없다.
+hourly CSV: 14 columns without a header. The first numeric row contains the initial
+observed longitude/latitude, with zeros in the remaining columns.
+Zero-based column indices for subsequent rows:
+  0,1: Observed end-position longitude/latitude
+  2,3: Modeled end-position longitude/latitude
+  4,5,6,7: wind_y, wind_x, current_y, current_x at the starting position
+  8,9: Modeled longitude/latitude displacement
+  10,11: Observed longitude/latitude displacement
+  12,13: Observed displacement minus modeled displacement
 
-hourly CSV: 헤더 없이 14열. 첫 숫자 행은 초기 관측 경위도와 나머지 0.
-이후 행의 0-based 열 인덱스:
-  0,1: 관측 끝 위치 경도/위도
-  2,3: 모델 끝 위치 경도/위도
-  4,5,6,7: 시작 위치의 wind_y, wind_x, current_y, current_x
-  8,9: 모델 경도/위도 변위
-  10,11: 관측 경도/위도 변위
-  12,13: 관측 변위 - 모델 변위
+expanded CSV: A header beginning with '# ' and 34 numeric columns.
+  0..29: 30 input features
+  30,31: Prediction targets (observed longitude/latitude displacement)
+  32,33: Correction targets (observed displacement minus modeled displacement)
+The first numeric row of expanded corresponds to numeric row 4 of hourly.
 
-expanded CSV: '# '로 시작하는 헤더와 숫자 34열.
-  0..29: 입력 특징 30개
-  30,31: prediction 정답, 관측 경도/위도 변위
-  32,33: correction 정답, 관측 변위 - 모델 변위
-expanded의 첫 숫자 행은 hourly의 숫자 행 4에 대응한다.
-
-4. 원본 데이터 -> 시간 단위 데이터 -> 특징확장
+4. Raw Data -> Hourly Data -> Feature Expansion
 
 1hour_dataset.py
-  기능: 각 시뮬레이션 CSV의 첫 두 데이터 행에서 위치, 환경 성분, 모델/관측
-        변위와 보정량을 계산해 궤적별 14열 hourly CSV를 만든다.
-  원본의 활성 KAIST 계산 루프를 일반 경로로 바꾸었다.
-  SVP/ARGOS용으로 반복된 주석 코드 블록은 제거했다.
+  Purpose: Creates a 14-column hourly CSV for each trajectory by calculating
+           positions, environmental components, modeled/observed displacements,
+           and correction values from the first two data rows of each simulation CSV.
+  The active KAIST computation loop in the original code was adapted to use
+  general paths. Repeated commented-out code blocks for SVP/ARGOS were removed.
 
   python 1hour_dataset.py --data-path data_path/raw --save-path data_path/hourly
 
-공개 예시의 원본 로딩만 확인:
+To check only the loading of the released raw-data example:
 
   python 1hour_dataset.py --data-path data_example --save-path save_path/example_hourly
 
 feature_expansion.py
-  기능: 현재 6특징에 과거 1/2/3시간 누적 환경 변화와 모델/관측 변위를 붙여
-        30개 입력과 4개 정답을 만든다. 원본 특징 계산/열 순서를 유지했다.
+  Purpose: Adds cumulative environmental changes and modeled/observed displacements
+           over the preceding 1/2/3 hours to the current six features, producing
+           30 input features and four target values.
+  The original feature computations and column order have been preserved.
 
   python feature_expansion.py --data-path data_path/hourly --save-path data_path/expanded
 
-5. 6/30/10특징 prediction 및 correction
+5. Prediction and Correction Using 6/30/10 Features
 
-아래 8개 파일은 각 궤적 하나를 제외한 나머지로 학습하는 원본 LOO 실험이다.
-모델은 Linear, SVR, MLP, LightGBM, LSTM이며 원본의 모델 구조를 유지한다.
-기본 사전학습 epochs=500, batch_size=32, EarlyStopping patience=10이다.
-LSTM timestep=6이며 여섯 특징 실험도 3시간 특징확장 손실을 맞춰 평가한다.
+The eight files described below implement the original leave-one-out (LOO) experiments,
+in which each trajectory is held out in turn and the remaining trajectories are used
+for training. The models are Linear, SVR, MLP, LightGBM, and LSTM, with their
+original model architectures preserved.
+Default pretraining settings are epochs=500, batch_size=32, and EarlyStopping
+patience=10. The LSTM uses timestep=6, and the six-feature experiments are also
+evaluated with the loss of samples caused by the three-hour feature expansion aligned.
 
 original_learning_prediction.py / original_learning_correction.py
-  기능: 원래 6특징(hourly 4..9)으로 관측 변위 직접 예측 / 모델 변위 보정.
+  Purpose: Direct prediction of observed displacement / correction of modeled
+           displacement using the original six features (hourly columns 4..9).
 
   python original_learning_prediction.py --data-path data_path/hourly --save-path save_path/original_prediction
   python original_learning_correction.py --data-path data_path/hourly --save-path save_path/original_correction
 
 expanded_learning_prediction.py / expanded_learning_correction.py
-  기능: 확장된 30특징 모두를 사용한 예측 / 보정 비교.
+  Purpose: Prediction/correction comparison using all 30 expanded features.
 
   python expanded_learning_prediction.py --data-path data_path/expanded --original-data-path data_path/hourly --save-path save_path/expanded_prediction
   python expanded_learning_correction.py --data-path data_path/expanded --original-data-path data_path/hourly --save-path save_path/expanded_correction
 
 10features_prediction.py / 10features_correction.py
-  기능: selected_learning 원본 기준 10특징 LOO 예측 / 보정 (SVR: target standardize, 기본 epsilon=0.1).
-  prediction 입력: 5,8,9,12,13,20,21,26,28,29
-  correction 입력: 4,5,10,11,12,13,19,21,28,29
+  Purpose: Ten-feature LOO prediction/correction based on the original selected_learning
+           implementation (SVR: standardized target; default epsilon=0.1).
+  Prediction input indices: 5,8,9,12,13,20,21,26,28,29
+  Correction input indices: 4,5,10,11,12,13,19,21,28,29
 
   python 10features_prediction.py --data-path data_path/expanded --original-data-path data_path/hourly --save-path save_path/10_prediction
   python 10features_correction.py --data-path data_path/expanded --original-data-path data_path/hourly --save-path save_path/10_correction
 
-6. SHAP feature selection (30개 -> 10개)
+6. SHAP Feature Selection (30 -> 10 Features)
 
 shap_revision/shap_prediction.py / shap_revision/shap_correction.py
-  기능: shap_prediction.py / shap_correction.py 원본 기준으로 0~29번 특징 전체를
-        사용해 데이터셋별 LightGBM/LSTM의 SHAP 순위 및 각 모델 top-10을 저장한다.
+  Purpose: Using all feature indices 0..29, following the original
+           shap_prediction.py / shap_correction.py implementations, saves the
+           dataset-specific SHAP rankings and top-10 features for LightGBM/LSTM.
 shap_revision/shap_runner.py
-  공통 구현. 원본 학습 구조, 6시점 LSTM, 축별 |SHAP| 정규화/평균 및 시간축 합을 유지한다.
+  Shared implementation. It preserves the original training architecture,
+  six-step LSTM, per-axis |SHAP| normalization/averaging, and summation across
+  the time axis.
 
   for cohort in svp_2021 argos_2021 svp_2022 argos_2022 svp_2023 argos_2023 kaist_2023; do
     python shap_revision/shap_prediction.py --data-path data_path/$cohort/expanded --save-path save_path/shap30/$cohort --dataset-label $cohort
     python shap_revision/shap_correction.py --data-path data_path/$cohort/expanded --save-path save_path/shap30/$cohort --dataset-label $cohort
   done
-위 7개 이름은 연도/종류별 경로 예시이며 실제 폴더에 맞게 바꾼다. dataset-label은 서로 달라야 한다.
-출력: shap_prediction_<label>.csv / shap_correction_<label>.csv 및 원본 형식 TXT/그림/scaler.
-원본처럼 전체 학습 표본을 설명한다. LSTM background는 무작위 10%(최소 1개), 기본 epochs=500.
+
+The seven cohort names above are illustrative year/type directory names; replace
+them with the actual directories. Each dataset-label must be unique.
+Outputs: shap_prediction_<label>.csv / shap_correction_<label>.csv, and TXT files,
+figures, and scalers in the original formats.
+As in the original implementation, SHAP explanations use the entire training sample.
+The LSTM background is a random 10% (at least one sample); default epochs=500.
 
 shap_revision/count_shap_features.py
-  기능: 7개 데이터셋의 각 모델 top-10을 자동 집계한다. count는 최대 14회(7개 x 2모델),
-        dataset_count는 한 모델 이상에서 선택된 데이터셋 수(최대 7개)이다.
-  count 내림차순, 선택된 SHAP 합 내림차순, 특징 번호 오름차순으로 최종 10개를 선택한다.
+  Purpose: Automatically aggregates the top-10 features from each model across
+           seven datasets. The maximum count is 14 (7 datasets x 2 models),
+           while dataset_count is the number of datasets in which a feature is
+           selected by at least one model (maximum 7).
+  The final 10 features are selected by descending count, then descending
+  aggregated SHAP magnitude, and finally ascending feature index.
 
   python shap_revision/count_shap_features.py --data-path save_path/shap30 --save-path save_path/shap_counts
 
-출력: shap_results, prediction_feature_counts.csv, correction_feature_counts.csv, selected_features.json.
-특징 번호는 0 기준이며 미선택 특징도 포함한다. 재실행 시 CSV는 덮어쓰고 TXT는 원본처럼 누적한다.
-집계는 학습 코드의 고정 특징을 바꾸지 않는다. 일부 집계만 확인할 때는 --expected-datasets 개수를 지정한다.
+Outputs: shap_results, prediction_feature_counts.csv, correction_feature_counts.csv,
+and selected_features.json.
+Feature indices are zero-based, and unselected features are also included.
+On rerunning, CSV files are overwritten, whereas TXT files are appended to as in
+the original code.
+Aggregation does not modify the fixed feature selections in the training scripts.
+To check only a subset of results, specify the number with --expected-datasets.
 
-7. Incremental learning 유무 비교 및 48시간 예측 저장
+7. Comparison With and Without Incremental Learning and Saving 48-Hour Predictions
 
 expanded_incremental_learning_prediction.py
 expanded_incremental_learning_correction.py
-  기능: 다른 두 데이터셋으로 5개 모델을 사전학습하고, 대상 데이터셋의 앞 구간을
-        모아서 추가 학습한다. 추가 학습 전/후의 이후 48시간 성능을 비교한다.
-        추가 학습 후 예측 CSV는 GA/WMA 입력으로 저장한다.
+  Purpose: Pretrains five models on two other datasets, then performs additional
+           training using the initial intervals collected from the target dataset.
+           Compares performance over the subsequent 48 hours before and after
+           additional training. Post-adaptation prediction CSV files are saved
+           as inputs for GA/WMA.
 
   python expanded_incremental_learning_prediction.py --pretrain-data-path data_path/source_a/expanded data_path/source_b/expanded --data-path data_path/target/expanded --original-data-path data_path/target/hourly --save-path save_path/pred48
   python expanded_incremental_learning_correction.py --pretrain-data-path data_path/source_a/expanded data_path/source_b/expanded --data-path data_path/target/expanded --original-data-path data_path/target/hourly --save-path save_path/cor48
 
-출력:
+Outputs:
   save_path/pred48/expanded_incremental_learning_prediction.txt
   save_path/cor48/expanded_incremental_learning_correction.txt
-  각 save_path의 scaler.pkl, Linear.keras, SVR.pkl, MLP.keras,
-    LGBM_X.pkl, LGBM_Y.pkl, LSTM.keras: 원본처럼 사전학습 상태 저장에 사용.
-  각 save_path/predictions/{linear,svr,mlp,lgbm,lstm}<index>.csv
-  각 predictions/prediction_index.csv 및 prediction_config.json
+  scaler.pkl, Linear.keras, SVR.pkl, MLP.keras,
+    LGBM_X.pkl, LGBM_Y.pkl, LSTM.keras under each save_path:
+    Used to save the pretrained states, as in the original implementation.
+  save_path/predictions/{linear,svr,mlp,lgbm,lstm}<index>.csv under each save_path
+  prediction_index.csv and prediction_config.json under each predictions directory
 
-추가 학습 후 모델은 메모리에서 평가하고 예측을 저장한다. 저장된 모델 파일이
-추가 학습 후 모델이라고 해석하면 안 된다. 이 저장 순서도 원본을 유지했다.
-SVR.pkl에는 타깃 scaler가 포함된 publication_utils.StandardizedTargetSVR가
-저장되므로 로딩 시 이 모듈을 Python 경로에 포함해야 한다.
+After additional training, the adapted models are evaluated in memory and their
+predictions are saved. The saved model files should NOT be interpreted as
+post-adaptation models. This saving order is preserved from the original code.
+SVR.pkl contains publication_utils.StandardizedTargetSVR with a target scaler;
+this module must be on the Python path when loading the file.
 
-증분학습의 선택 입력은 아래 10개로, 위 revision_10features 실험과 다르다.
-  prediction: 5,8,9,12,13,20,21,26,28,29
-  correction: 4,5,10,11,12,13,19,21,28,29
-정답 2개를 포함한 usecols는 각각 위 목록 + 30,31 / 32,33이다.
+The 10 selected inputs used for incremental learning are listed below. They differ
+from those in the revision_10features experiment above.
+  Prediction: 5,8,9,12,13,20,21,26,28,29
+  Correction: 4,5,10,11,12,13,19,21,28,29
+The usecols selections, including the two target columns, consist of the above
+lists plus 30,31 for prediction or 32,33 for correction, respectively.
 
-기본 test_hours=48일 때 expanded 추가 학습 0:45, 평가 45:93이다.
-hourly 파일은 skiprows=49, max_rows=48, 시작점은 skiprows=48의 한 행이다.
-숫자 행 0이 초기 위치이므로 평가 변위는 숫자 행 49..96이다.
-길이 조건 len(expanded)>=96도 원본과 동일하다.
-추가 학습은 neural epochs=300, batch_size=48이고 SVR은 partial_fit 한 번,
-LightGBM은 기존 booster에서 이어서 학습한다. 입력/타깃 scaler는 재학습하지 않는다.
+With the default test_hours=48, the expanded rows for additional training are
+0:45, and the evaluation rows are 45:93.
+The hourly file uses skiprows=49 and max_rows=48; the starting position is the
+single row at skiprows=48. Since numeric row 0 is the initial position, the
+evaluation displacements correspond to numeric rows 49..96.
+The original length requirement len(expanded)>=96 is preserved.
+Additional training uses neural epochs=300 and batch_size=48. SVR performs one
+partial_fit operation, and LightGBM continues training from the existing booster.
+The input and target scalers are not refitted.
 
-이 실험은 대상 궤적들의 앞 구간을 함께 사용한 temporal evaluation이다.
-각 평가 궤적마다 모델을 다시 학습하는 LOO/CV와 구분해야 한다.
+This experiment is a temporal evaluation that jointly uses the initial intervals
+of the target trajectories. It should be distinguished from LOO/CV, which retrains
+the models for each individual evaluation trajectory.
 
-8. GA 내부 목적함수용 24시간 예측
+8. Generating 24-Hour Predictions for the GA Internal Objective Function
 
 ga_expanded_incremental_learning_prediction.py
 ga_expanded_incremental_learning_correction.py
-  기능: 앞의 원본 증분학습 로직을 test_hours=24로 실행해 GA 목적함수용
-        24시간 예측을 만든다. 450줄의 동일한 계산 코드를 중복 복사하지 않는다.
-  GA용 SVR도 다른 4개 모델과 동일한 선택 10특징을 사용한다.
+  Purpose: Runs the original incremental-learning logic described above with
+           test_hours=24 to produce 24-hour predictions for the GA objective.
+           This avoids duplicating the same approximately 450 lines of
+           computation code.
+  The GA-specific SVR also uses the same 10 selected features as the other
+  four models.
 
   python ga_expanded_incremental_learning_prediction.py --pretrain-data-path data_path/source_a/expanded data_path/source_b/expanded --data-path data_path/target/expanded --original-data-path data_path/target/hourly --save-path save_path/pred24
   python ga_expanded_incremental_learning_correction.py --pretrain-data-path data_path/source_a/expanded data_path/source_b/expanded --data-path data_path/target/expanded --original-data-path data_path/target/hourly --save-path save_path/cor24
 
-출력은 pred24/predictions 및 cor24/predictions이다. txt 로그는 원래 GA용 이름인
-ga_expanded_incremental_learning_prediction.txt / correction.txt를 유지한다.
-추가 학습 구간은 expanded 0:21, 목적함수 평가 구간은 21:45이고,
-hourly 숫자 행 25..48을 사용한다. 따라서 이후 48시간 평가 구간과 겹치지 않는다.
-24/48시간 길이 조건이 다르므로 GA에 줄 두 결과는 같은 궤적 코호트로 준비해야 한다.
+Outputs are in pred24/predictions and cor24/predictions.
+The TXT logs retain the original GA-specific names:
+ga_expanded_incremental_learning_prediction.txt / correction.txt.
+The additional-training interval is expanded 0:21, and the objective-function
+evaluation interval is 21:45, using hourly numeric rows 25..48.
+Therefore, this interval does not overlap with the subsequent 48-hour evaluation.
+Since the 24-/48-hour length requirements differ, prepare the two sets of results
+for GA using the same trajectory cohort.
 
-9. GA 최적화, 대표 해 및 통계
+9. GA Optimization, Representative Solution, and Statistics
 
 ga_pred_statistical.py
-  기능: 앞선 24시간 예측에서 GA 초기 가중치를 최적화한 뒤, 이후 48시간에서
-        OpenDrift / Uniform average / GA average / Uniform-WMA / GA-WMA를 평가한다.
+  Purpose: Optimizes the initial GA weights using the preceding 24-hour predictions,
+           then evaluates OpenDrift / Uniform average / GA average / Uniform-WMA /
+           GA-WMA over the subsequent 48 hours.
 ga_pred_statistical_common.py
-  원본 GA/통계 공통 구현. 직접 실행할 필요는 없다.
+  Shared implementation of the original GA/statistical procedures. It does not
+  need to be executed directly.
 
   python ga_pred_statistical.py --data-path save_path/pred48/predictions --ga-data-path save_path/pred24/predictions --original-data-path data_path/target/hourly --save-path save_path/ga_pred
   python ga_pred_statistical.py --data-path save_path/cor48/predictions --ga-data-path save_path/cor24/predictions --original-data-path data_path/target/hourly --save-path save_path/ga_cor
 
-기본값: population=50, generation=100, repeat=30, seed=42,
+Defaults: population=50, generation=100, repeat=30, seed=42,
 test_hours=48, ga_test_hours=24, bootstrap=10000.
-GA는 30회 실행 목적함수 MAE 중앙값에 가장 가까운 실행을 대표 해로 선택한다.
-해당 가중치는 GA average와 GA-WMA 초기화에 함께 사용한다.
-부모/자식의 서로 다른 상대 fitness를 비교하던 오류는 공통 MAE 비교로 수정했다.
-과거 동작 대조가 필요하면 위 명령에 --legacy-replacement를 추가한다.
+Among 30 GA runs, the run with the objective-function MAE closest to the median
+is selected as the representative solution.
+Its weights are used for both GA average and GA-WMA initialization.
+An error in comparing different relative fitness values between parents and
+offspring was corrected by using a common MAE comparison.
+For comparison with the previous behavior, add --legacy-replacement to the
+commands above.
 
-원본 CSV 이름과 통계 함수/검정 구성을 유지했다.
+The original CSV file names and statistical functions/tests have been preserved:
   ga_run_summary.csv, ga_run_fold_metrics.csv, method_fold_metrics.csv,
   summary_table.csv, result_summary.csv, ga_run_distribution_summary.csv,
   wilcoxon_planned_comparisons.csv, ga_selected_weights.csv, manifest.json,
   boxplots.png
-기존 cv/fold 열 이름은 결과 호환을 위해 남겼다. 이 incremental/GA 평가에서
-해당 통계 단위는 독립 재학습 CV fold가 아니라 시간 분할된 궤적이다.
-원래 ddof 설정과 통계 함수를 유지했으므로 SD를 임의로 재정의하지 않았다.
-검정은 GA-WMA의 개선 방향 단측 paired Wilcoxon이며, 이 실행의 8개 비교에 Holm 보정한다.
+The existing cv/fold column names are retained for result compatibility.
+In this incremental-learning/GA evaluation, the statistical unit is a
+time-partitioned trajectory, not an independently retrained CV fold.
+The original ddof setting and statistical functions are retained; the standard
+deviation (SD) was not redefined arbitrarily.
+The test is a one-sided paired Wilcoxon test in the direction of GA-WMA improvement,
+with Holm correction across the eight comparisons in this run.
 
-10. WMA 초기 가중치 및 실시간 갱신
+10. WMA Initial Weights and Real-Time Updating
 
 realtime_weighted_majority_revision.py
-  기능: 원본의 6개 데이터셋/task 반복 블록 중 같은 계산 블록 하나를 유지하고,
-        경로와 초기 가중치를 인수로 받아 WMA를 평가한다.
+  Purpose: Retains one common computational block from the six repeated
+           dataset/task blocks of the original script, and evaluates WMA using
+           path and initial-weight arguments.
 
-GA 대표 가중치를 사용하는 경우:
+Using representative GA weights:
 
   python realtime_weighted_majority_revision.py --data-path save_path/pred48/predictions --original-data-path data_path/target/hourly --ga-weights-path save_path/ga_pred/ga_selected_weights.csv --save-path save_path/wma_pred
   python realtime_weighted_majority_revision.py --data-path save_path/cor48/predictions --original-data-path data_path/target/hourly --ga-weights-path save_path/ga_cor/ga_selected_weights.csv --save-path save_path/wma_cor
 
-처음 가중치를 모두 1로 사용하는 경우:
+Using initial weights all set to 1:
 
   python realtime_weighted_majority_revision.py --data-path save_path/pred48/predictions --original-data-path data_path/target/hourly --save-path save_path/wma_uniform
 
-임의의 초기값은 --weights w_linear w_svr w_mlp w_lgbm w_lstm으로 지정한다.
-각 궤적에서 초기화하고, 당해 예측 후 관측 오차로 다음 시간의 가중치를 갱신한다.
-원래 weights *= exp(-MAE)와 동일한 규칙을 log 좌표로 계산해 underflow를 줄였다.
-결과 로그 파일은 원본 이름 realtime_weighted_majority_ga.txt를 유지한다.
-WMA는 매 시간 관측을 사용하므로 관측 없이 48시간을 내다보는 open-loop 예보가 아니다.
+Arbitrary initial values may be specified with
+--weights w_linear w_svr w_mlp w_lgbm w_lstm.
+Weights are initialized separately for each trajectory. After each prediction,
+the observed error is used to update the weights for the next time step.
+The original weights *= exp(-MAE) rule is evaluated in log space to reduce
+underflow.
+The result-log file retains its original name, realtime_weighted_majority_ga.txt.
+Because WMA uses observations at every time step, this is not an open-loop
+48-hour forecast made without intermediate observations.
 
-11. RBFN 비교 실험
+11. RBFN Comparison Experiment
 
 revision_rbfn_pred.py / revision_rbfn_cor.py
-  기능: 원본의 6특징 LOO RBFN 예측 / 보정 실험을 WEKA RBFRegressor로 수행한다.
+  Purpose: Performs the original six-feature LOO RBFN prediction/correction
+           experiment using WEKA RBFRegressor.
 revision_rbfn_common.py
-  원본 ARFF 생성, Java 실행, 결과 파싱 및 성능 평가 구현. 직접 실행하지 않는다.
+  Shared implementation for original ARFF generation, Java execution, result
+  parsing, and performance evaluation. It does not need to be run directly.
 
   python revision_rbfn_pred.py --data-path data_path/hourly --save-path save_path/rbfn_pred --weka-classpath 'data_path/weka.jar:data_path/RBFNetwork.jar'
   python revision_rbfn_cor.py --data-path data_path/hourly --save-path save_path/rbfn_cor --weka-classpath 'data_path/weka.jar:data_path/RBFNetwork.jar'
 
-Java가 PATH에 없다면 --java-bin <Java 실행 파일>을 추가한다.
-JAVA_BIN, WEKA_JAR, WEKA_CLASSPATH 환경변수도 사용할 수 있다.
-Linux classpath 구분자는 ':'이고 Windows는 ';'이다.
-WEKA 옵션 -N 2 -R 2 -C 2 -L 1.0E-6, 출력 정밀도 2자리의 원래 기본값을 유지했다.
-변위는 degree 단위이므로 작은 값이 0으로 반올림될 수 있다.
-정밀도 확인 실험은 --decimals 12, 다른 실험과 거리 정의를 맞추려면
---distance geodesic을 추가한다. 기본 NCLS 거리는 원본처럼 haversine이다.
+If Java is not on PATH, add --java-bin <Java executable>.
+The JAVA_BIN, WEKA_JAR, and WEKA_CLASSPATH environment variables may also be used.
+The classpath separator is ':' on Linux and ';' on Windows.
+The original WEKA defaults are retained: -N 2 -R 2 -C 2 -L 1.0E-6,
+with an output precision of two decimal places.
+Since displacement is measured in degrees, small values may round to zero.
+For a precision check, add --decimals 12. To match the distance definition
+used in other experiments, add --distance geodesic.
+The default NCLS distance uses haversine, as in the original code.
 
-12. SVR epsilon ablation 및 최종 설정만 별도 실행
+12. SVR Epsilon Ablation and Separate Execution of the Final Configuration
 
 expanded_svr_epsilon_ablation.py
-  기능: 30특징 LOO에서 raw target epsilon 0.1 / raw target epsilon 0.01 /
-        standardized target epsilon 0.1 / standardized target + 내부 검증 epsilon을 비교.
-  내부 후보는 0.01,0.03,0.1,0.3,1.0이며 최소 세 궤적이 필요하다.
-  명시적인 ablation이므로 raw target/다른 epsilon 조건을 남겼다.
+  Purpose: In 30-feature LOO experiments, compares raw-target epsilon=0.1,
+           raw-target epsilon=0.01, standardized-target epsilon=0.1,
+           and standardized-target epsilon selected by internal validation.
+  Internal candidates: 0.01,0.03,0.1,0.3,1.0; at least three trajectories
+  are required.
+  This is an explicit ablation, so raw-target and alternative-epsilon
+  conditions have been retained.
 
   python expanded_svr_epsilon_ablation.py --data-path data_path/expanded --original-data-path data_path/hourly --save-path save_path/svr_ablation --task both
 
 expanded_incremental_svr_epsilon_ablation.py
-  기능: 실제 사용한 최종 SVR 전용 코드. 선택 10특징, epsilon=0.1,
-        standardized target으로 incremental 유무를 48시간에서 비교한다.
+  Purpose: SVR-only implementation of the final configuration actually used,
+           comparing performance with and without incremental learning over
+           48 hours using 10 selected features, epsilon=0.1, and a
+           standardized target.
 ga_expanded_incremental_svr_epsilon_ablation.py
-  기능: 같은 최종 10특징 SVR 코드의 GA용 24시간 실행. 과거 30특징 코드는 사용하지 않는다.
+  Purpose: 24-hour GA-specific execution of the same final 10-feature SVR
+           implementation. The old 30-feature code is not used.
 
   python expanded_incremental_svr_epsilon_ablation.py --pretrain-data-path data_path/source_a/expanded data_path/source_b/expanded --data-path data_path/target/expanded --original-data-path data_path/target/hourly --save-path save_path/svr_only48 --task both
   python ga_expanded_incremental_svr_epsilon_ablation.py --pretrain-data-path data_path/source_a/expanded data_path/source_b/expanded --data-path data_path/target/expanded --original-data-path data_path/target/hourly --save-path save_path/svr_only24 --task both
 
-출력: 각 save_path의 expanded_incremental_svr_epsilon_ablation.txt
-      (24시간 GA용은 ga_expanded_incremental_svr_epsilon_ablation.txt)와
-      pred/predictions/svr<index>.csv, cor/predictions/svr<index>.csv.
---task prediction 또는 --task correction으로 하나만 실행할 수도 있다.
-이 전용 코드는 SVR 결과 검증용이며 나머지 네 모델의 예측은 만들지 않는다.
-앞의 five-model 코드에도 이미 같은 SVR 수정을 적용했으므로 전체 파이프라인에서
-이 코드를 따로 실행하거나 CSV를 수동 교체할 필요는 없다.
+Outputs: expanded_incremental_svr_epsilon_ablation.txt under each save_path
+         (ga_expanded_incremental_svr_epsilon_ablation.txt for the 24-hour GA run),
+         plus pred/predictions/svr<index>.csv and cor/predictions/svr<index>.csv.
+To run just one task, specify --task prediction or --task correction.
+This dedicated implementation is for verifying SVR results; it does not generate
+predictions for the other four models.
+The same SVR modification has already been applied to the five-model scripts,
+so there is no need to run this code separately or manually replace CSV files
+in the full pipeline.
 
 publication_utils.py
-  경로 인수, 파일 열거 순서 기록, 표준화 타깃 SVR, 번호-원본 매핑,
-  GA/WMA 입력 검사, 안정적인 WMA 갱신만 담은 작은 보조 모듈이다.
-  독립 실행용 프로그램이 아니다.
+  Small helper module containing path arguments, recording of file enumeration
+  order, standardized-target SVR, mapping from indices to original files,
+  GA/WMA input checks, and numerically stable WMA updating.
+  It is not a standalone executable script.
 
-13. 결과의 의미와 재현성 범위
+13. Interpretation of Results and Scope of Reproducibility
 
-prediction/correction의 저장 예측 CSV는 모두 최종 경도/위도 변위이다.
-correction CSV에는 모델 변위를 이미 더했으므로 GA/WMA에서 다시 더하지 않는다.
-모델 순서는 linear, svr, mlp, lgbm, lstm이다.
+All saved prediction/correction CSV files contain final longitude/latitude
+displacements. The correction CSV files already include the modeled displacement;
+do not add it again during GA/WMA processing.
+Model order: linear, svr, mlp, lgbm, lstm.
 
-MAE는 시간과 경도/위도 두 축에 대한 평균 절대 변위 오차이며 degree 단위다.
-NCLS는 시작점에서 변위를 누적한 위치 궤적을 이용해 원본 식으로 계산한다.
-관측 경로 길이가 0이면 정의되지 않은 NCLS를 NaN으로 기록한다.
-이때 일부 원본 형식 요약 로그에는 NaN이 전파될 수 있으므로 해당 궤적을 확인해야 한다.
+MAE is the mean absolute displacement error over time and the longitude/latitude
+axes, expressed in degrees.
+NCLS is calculated using the original equation from position trajectories obtained
+by accumulating displacements from the initial position.
+If the observed path length is zero, the undefined NCLS is recorded as NaN.
+Consequently, NaN may propagate into some original-format summary logs; check
+the affected trajectory in such cases.
 
-모델 구조, 기본 500/300 epochs, batch size, EarlyStopping, timestep, 분할,
-원본 seed 설정, 기존 로그/모델 이름은 유지했다. --epochs와 --incremental-epochs는
-작은 실행 검증용으로 줄일 수 있으나 논문 설정은 기본값을 사용한다.
-전체 실험의 재현에는 예시 외 전체 데이터, 정확한 코호트 구성과 파일 순서가 필요하다.
+The model architectures, default 500/300 epochs, batch sizes, EarlyStopping,
+timestep, data splits, original seed settings, and original log/model names have
+been preserved. --epochs and --incremental-epochs can be reduced for small-scale
+execution checks, but the manuscript settings are used by default.
+Full reproduction of the experiments requires the complete datasets beyond the
+released example, as well as the exact cohort construction and file ordering.
